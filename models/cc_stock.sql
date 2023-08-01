@@ -1,4 +1,8 @@
-WITH stg_cc_stock AS (
+WITH cc_sales_products AS (
+    SELECT * FROM {{ ref('cc_sales_products')}}
+),
+
+stg_cc_stock AS (
   SELECT
     ### Key ###
     CONCAT(model,"_",color,"_",IFNULL(size,"no-size")) AS product_id 
@@ -54,6 +58,6 @@ SELECT
   ,d.avg_daily_qty_91
   ,SAFE_DIVIDE(t.stock,d.avg_daily_qty_91) AS nb_day_stock
 FROM stg_cc_stock t
-LEFT JOIN `dbt_dev_user1.cc_sales_products` d USING (product_id)
+LEFT JOIN cc_sales_products d USING (product_id)
 WHERE TRUE
 ORDER BY product_id
