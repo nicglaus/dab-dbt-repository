@@ -1,45 +1,48 @@
-WITH cc_sales_products AS (
-    SELECT * FROM {{ ref('cc_sales_products')}}
-),
+with
+    cc_sales_products as (select * from {{ ref("cc_sales_products") }}),
 
-WITH stg_cc_stock AS (
-    SELECT *FROM {{ ref('stg_cc_stock')}}
-)
+    stg_cc_stock as (select * from {{ ref("stg_cc_stock") }})
 
-SELECT
-  ### Key ###
-  product_id 
-  ###########
-  ,model
-  ,color
-  ,size
-  -- category
-  ,CASE
-    WHEN REGEXP_CONTAINS(LOWER(model_name),'t-shirt') THEN 'T-shirt'
-    WHEN REGEXP_CONTAINS(LOWER(model_name),'short') THEN 'Short'
-    WHEN REGEXP_CONTAINS(LOWER(model_name),'legging') THEN 'Legging'
-    WHEN REGEXP_CONTAINS(LOWER(REPLACE(model_name,"è","e")),'brassiere|crop-top') THEN 'Crop-top'
-    WHEN REGEXP_CONTAINS(LOWER(model_name),'débardeur|haut') THEN 'Top'
-    WHEN REGEXP_CONTAINS(LOWER(model_name),'tour de cou|tapis|gourde') THEN 'Accessories'
-    ELSE NULL
-  END AS model_type
-  -- name
-  ,model_name
-  ,color_name
-  ,product_name
-  -- product info --
-  ,pdt_new
-  -- stock metrics --
-  ,forecast_stock
-  ,stock
-	,IF(stock>0,1,0) AS in_stock
-	-- value
-  ,price
-	,IF(stock<0,NULL,ROUND(stock*price,2)) AS stock_value
-  -- nb days --
-  ,d.avg_daily_qty_91
-  ,SAFE_DIVIDE(t.stock,d.avg_daily_qty_91) AS nb_day_stock
-FROM stg_cc_stock t
-LEFT JOIN cc_sales_products d USING (product_id)
-WHERE TRUE
-ORDER BY product_id
+select
+    # ## Key ###
+    product_id,
+    # ##########
+    model,
+    color,
+    size,
+    -- category
+    case
+        when regexp_contains(lower(model_name), 't-shirt')
+        then 'T-shirt'
+        when regexp_contains(lower(model_name), 'short')
+        then 'Short'
+        when regexp_contains(lower(model_name), 'legging')
+        then 'Legging'
+        when regexp_contains(lower(replace(model_name, "è", "e")), 'brassiere|crop-top')
+        then 'Crop-top'
+        when regexp_contains(lower(model_name), 'débardeur|haut')
+        then 'Top'
+        when regexp_contains(lower(model_name), 'tour de cou|tapis|gourde')
+        then 'Accessories'
+        else null
+    end as model_type,
+    -- name
+    model_name,
+    color_name,
+    product_name,
+    -- product info --
+    pdt_new,
+    -- stock metrics --
+    forecast_stock,
+    stock,
+    if(stock > 0, 1, 0) as in_stock,
+    -- value
+    price,
+    if(stock < 0, null, round(stock * price, 2)) as stock_value,
+    -- nb days --
+    d.avg_daily_qty_91,
+    safe_divide(t.stock, d.avg_daily_qty_91) as nb_day_stock
+from stg_cc_stock t
+left join cc_sales_products d using (product_id)
+where true
+order by product_id
